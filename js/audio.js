@@ -42,6 +42,13 @@ function ac() {
   return ctx;
 }
 
+// For games that make their own music (the rhythm game): the shared context plus the
+// main output and reverb inputs. Returns null if Web Audio isn't available.
+export function audioGraph() {
+  const c = ac();
+  return c ? { ctx: c, out: master, verb: reverbIn } : null;
+}
+
 // iPhone only allows audio after the first touch, so we wake it up then.
 export function unlockAudio() {
   const c = ac();

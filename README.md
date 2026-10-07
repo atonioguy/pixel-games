@@ -9,7 +9,7 @@ A cozy pixel-art collection of mini games, made to be installed on an iPhone hom
 | **Merge Kitchen**: merge ingredients into dishes and serve cute customers | Playable |
 | **Fishy Tank**: collect fish and decorate your aquarium | Playable |
 | **Cozy Café**: run and decorate your own café | Playable |
-| **Beat Battle**: rhythm game, tap the arrows to the music | Coming soon |
+| **Beat Battle**: rhythm game, tap the arrows to the music | Playable |
 | **Pixel Town**: make little people and watch them live together | Coming soon |
 
 Coins are shared across all games.
@@ -41,6 +41,14 @@ Coins are shared across all games.
 - **Decorate**: buy furniture in the Shop, then tap a free green tile to place it. Tap furniture to Move or Store it. **Styles** changes the wallpaper and floor. Decorations add **charm** (the heart), which brings more customers and tips.
 - Level up to unlock new recipes, furniture and styles. Customers still come (a bit less often) while the app is closed.
 
+### Beat Battle: how to play
+
+- Pick a song and a difficulty. The opponent sings a phrase first (its notes show as faint ghost arrows), then it's **your turn** to copy it.
+- Tap a lane when its arrow reaches the outlines at the bottom. Keep holding on long notes.
+- Good timing fills the health bar and misses drain it. Finish a song to unlock the next one and earn coins.
+- If your taps feel early or late, use **Tap timing** on the song list to calibrate. Bluetooth headphones add delay, so calibrate with the ones you use.
+- All the music is original and generated in the app.
+
 ## Install on iPhone
 
 1. Open the game's web address in **Safari**.
@@ -63,6 +71,7 @@ js/ui.js              toasts, dialogs, flying coins
 js/games/merge/       Merge Kitchen (data.js holds the balancing numbers)
 js/games/aquarium/    Fishy Tank (data.js holds species, decor and timings)
 js/games/cafe/        Cozy Café (data.js holds recipes, furniture and styles)
+js/games/rhythm/      Beat Battle (music.js generates the songs, charts and synth voices)
 js/haptics.js         vibration ticks (Android + iOS 18 Safari)
 sw.js                 offline support
 tools/                sprite preview sheet + icon generator (node)
