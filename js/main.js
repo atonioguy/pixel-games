@@ -7,7 +7,7 @@ import { tileURL } from './pixel.js';
 import { WALLPAPER, WOOD } from './sprites.js';
 
 // Shown on the menu so it's easy to tell which version is running. Bump with sw.js VERSION.
-const APP_VERSION = 7;
+const APP_VERSION = 8;
 
 const GAMES = [
   {
@@ -26,7 +26,14 @@ const GAMES = [
     color: 'blue',
     load: () => import('./games/aquarium/aquarium.js'),
   },
-  { id: 'cafe', name: 'Cozy Café', desc: 'Run & decorate your own café', icon: 'cafecup', color: 'mint' },
+  {
+    id: 'cafe',
+    name: 'Cozy Café',
+    desc: 'Run & decorate your own café',
+    icon: 'cafecup',
+    color: 'mint',
+    load: () => import('./games/cafe/cafe.js'),
+  },
   { id: 'rhythm', name: 'Beat Battle', desc: 'Tap the arrows to the music', icon: 'note', color: 'lav' },
   { id: 'town', name: 'Pixel Town', desc: 'Make little people & watch them live', icon: 'house', color: 'pink' },
 ];

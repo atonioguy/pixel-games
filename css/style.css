@@ -1334,3 +1334,35 @@ button.pressed {
   justify-content: flex-end;
   gap: 2px;
 }
+
+/* ---------- Cozy Café ---------- */
+
+.cafe .level-bar {
+  padding: 0 6px;
+}
+.lvl-badge.charm {
+  color: var(--pink-d);
+}
+.cafe-frame {
+  background: #f3dcc9;
+}
+.lock-tag {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 16px;
+  color: var(--ink-soft);
+  padding: 4px 8px;
+  background: var(--cream);
+}
+.locked-row .shop-icon .px-icon {
+  filter: grayscale(0.7) opacity(0.6);
+}
+.swatch {
+  width: 40px;
+  height: 40px;
+}
+.tool.done {
+  background: var(--mint);
+}

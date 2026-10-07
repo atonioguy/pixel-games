@@ -8,7 +8,7 @@ A cozy pixel-art collection of mini games, made to be installed on an iPhone hom
 | --- | --- |
 | **Merge Kitchen**: merge ingredients into dishes and serve cute customers | Playable |
 | **Fishy Tank**: collect fish and decorate your aquarium | Playable |
-| **Cozy Café**: run and decorate your own café | Coming soon |
+| **Cozy Café**: run and decorate your own café | Playable |
 | **Beat Battle**: rhythm game, tap the arrows to the music | Coming soon |
 | **Pixel Town**: make little people and watch them live together | Coming soon |
 
@@ -33,6 +33,14 @@ Coins are shared across all games.
 - **Decor**: decorations make fish happier, and each fish species likes one. Rare fish only visit when their favourite decoration is in the tank. You can also upgrade the tank to hold more fish.
 - **Fishdex**: tracks the 12 species you've discovered.
 
+### Cozy Café: how to play
+
+- Tap the **oven** or the **drinks bar** to make something (it costs a few coins for ingredients). It cooks on a real-time timer.
+- When it's done, tap it to put the food in a **display case**. Customers walk in, buy it, and sometimes sit down to eat.
+- Money goes into the **register**. Tap it (or **Collect**) to take the coins.
+- **Decorate**: buy furniture in the Shop, then tap a free green tile to place it. Tap furniture to Move or Store it. **Styles** changes the wallpaper and floor. Decorations add **charm** (the heart), which brings more customers and tips.
+- Level up to unlock new recipes, furniture and styles. Customers still come (a bit less often) while the app is closed.
+
 ## Install on iPhone
 
 1. Open the game's web address in **Safari**.
@@ -54,6 +62,7 @@ js/audio.js           chiptune sound effects (Web Audio)
 js/ui.js              toasts, dialogs, flying coins
 js/games/merge/       Merge Kitchen (data.js holds the balancing numbers)
 js/games/aquarium/    Fishy Tank (data.js holds species, decor and timings)
+js/games/cafe/        Cozy Café (data.js holds recipes, furniture and styles)
 js/haptics.js         vibration ticks (Android + iOS 18 Safari)
 sw.js                 offline support
 tools/                sprite preview sheet + icon generator (node)

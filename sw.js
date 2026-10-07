@@ -2,7 +2,7 @@
 // Online: always loads the latest version (and saves a copy).
 // Offline: falls back to the saved copy.
 // Bump VERSION whenever the file list changes.
-const VERSION = 'cozy-v7';
+const VERSION = 'cozy-v8';
 const FILES = [
   './',
   './index.html',
@@ -19,6 +19,8 @@ const FILES = [
   './js/games/merge/data.js',
   './js/games/aquarium/aquarium.js',
   './js/games/aquarium/data.js',
+  './js/games/cafe/cafe.js',
+  './js/games/cafe/data.js',
   './assets/fonts/Jersey10.woff2',
   './assets/icons/icon-180.png',
   './assets/icons/icon-192.png',
