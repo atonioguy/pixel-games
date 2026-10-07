@@ -10,7 +10,7 @@ A cozy pixel-art collection of mini games, made to be installed on an iPhone hom
 | **Fishy Tank**: collect fish and decorate your aquarium | Playable |
 | **Cozy Café**: run and decorate your own café | Playable |
 | **Beat Battle**: rhythm game, tap the arrows to the music | Playable |
-| **Pixel Town**: make little people and watch them live together | Coming soon |
+| **Pixel Town**: make little people and watch them live together | Playable |
 
 Coins are shared across all games.
 
@@ -49,6 +49,14 @@ Coins are shared across all games.
 - If your taps feel early or late, use **Tap timing** on the song list to calibrate. Bluetooth headphones add delay, so calibrate with the ones you use.
 - All the music is original and generated in the app.
 
+### Pixel Town: how to play
+
+- Tap **New** to design a resident: face, hair, clothes, name, personality and favourite food. Up to 8 live in the apartments.
+- Residents go about their day on your phone's real clock: the park, the café, the shop, the beach, or visiting friends. At night they sleep in their rooms.
+- When they meet they chat, play, share snacks or argue. Over time they become friends, best friends, rivals, or fall in love.
+- A **!** means someone needs you: they're hungry (buy food in the **Shop**), bored, lonely, want a makeover, had a fight, or have a crush and want your advice. Helping makes them happier and levels them up.
+- **People** lists everyone (tap for their relationships, to feed or edit them, or to visit their room). **News** shows what happened, including while the app was closed.
+
 ## Install on iPhone
 
 1. Open the game's web address in **Safari**.
@@ -72,6 +80,7 @@ js/games/merge/       Merge Kitchen (data.js holds the balancing numbers)
 js/games/aquarium/    Fishy Tank (data.js holds species, decor and timings)
 js/games/cafe/        Cozy Café (data.js holds recipes, furniture and styles)
 js/games/rhythm/      Beat Battle (music.js generates the songs, charts and synth voices)
+js/games/town/        Pixel Town (avatar.js builds the characters, data.js holds personalities etc.)
 js/haptics.js         vibration ticks (Android + iOS 18 Safari)
 sw.js                 offline support
 tools/                sprite preview sheet + icon generator (node)

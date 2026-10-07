@@ -1578,3 +1578,245 @@ button.pressed {
   align-items: center;
   font-size: 22px;
 }
+
+/* ---------- Pixel Town ---------- */
+
+.town {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.town-frame {
+  background: #cfe7b9;
+}
+.tool {
+  position: relative;
+}
+.badge-count {
+  position: absolute;
+  top: -6px;
+  right: -4px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 4px;
+  border-radius: 10px;
+  background: var(--pink-d);
+  color: #fff;
+  font-size: 14px;
+  line-height: 20px;
+  box-shadow: 0 0 0 2px var(--ink);
+}
+.alert-dot {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--yellow);
+  color: #e8606f;
+  font-size: 14px;
+  box-shadow: 0 0 0 2px var(--ink);
+}
+.mini-bar {
+  flex: none;
+  width: 70px;
+  height: 10px;
+  background: var(--paper);
+  box-shadow: 0 0 0 2px var(--ink);
+  margin: 2px;
+}
+.mini-bar i {
+  display: block;
+  height: 100%;
+  background: var(--pink-d);
+}
+.mini-bar.food i {
+  background: #f39a5b;
+}
+.mini-bar.rel i {
+  background: var(--pink-d);
+}
+.mini-bar.rel.neg i {
+  background: #9b7b7b;
+}
+.person-row {
+  width: 100%;
+  text-align: left;
+}
+.res-head {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.res-avatar {
+  flex: none;
+  padding: 6px;
+  background: var(--pink);
+  line-height: 0;
+}
+.res-stats {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 17px;
+}
+.res-fav {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--ink-soft);
+  font-size: 16px;
+}
+.res-mood {
+  font-size: 16px;
+  color: var(--pink-d);
+}
+.res-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 10px 0 4px;
+}
+.moveout {
+  margin-top: 14px;
+}
+.news-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 2px;
+  border-bottom: 3px dashed #f0dcc6;
+}
+.news-faces {
+  flex: none;
+  display: flex;
+  width: 52px;
+}
+.news-text {
+  font-size: 17px;
+  line-height: 1.2;
+}
+.news-text small {
+  display: block;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.req-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.req-text {
+  font-size: 22px;
+}
+.req-opts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.person-btn {
+  justify-content: flex-start;
+  gap: 10px;
+}
+.person-btn small {
+  margin-left: auto;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+.town-editor {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 12px 10px;
+}
+.ed-top {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px;
+  background: var(--pink);
+}
+.ed-avatar {
+  width: 96px;
+  height: 120px;
+  background: #fde8ea;
+  box-shadow: 0 0 0 3px var(--ink);
+}
+.ed-side {
+  flex: 1;
+  min-width: 0;
+}
+.ed-name {
+  width: 100%;
+  font:
+    24px 'Jersey 10',
+    ui-rounded,
+    sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  padding: 6px 8px;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.ed-tabs {
+  flex: none;
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+}
+.ed-opts {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 2px 4px;
+}
+.ed-group {
+  margin-bottom: 10px;
+}
+.ed-label {
+  font-size: 17px;
+  color: var(--ink-soft);
+  margin-bottom: 4px;
+}
+.ed-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.swatch-btn {
+  width: 36px;
+  height: 36px;
+  box-shadow: 0 0 0 3px var(--ink);
+  margin: 3px;
+}
+.swatch-btn.on {
+  box-shadow:
+    0 0 0 3px var(--ink),
+    0 0 0 6px var(--pink-d);
+}
+.variant-btn {
+  display: grid;
+  place-items: center;
+  padding: 4px;
+  margin: 3px;
+  background: var(--paper);
+  box-shadow: 0 0 0 3px var(--ink);
+}
+.variant-btn.on {
+  background: var(--mint);
+}
+.ed-actions {
+  flex: none;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
