@@ -107,3 +107,95 @@ export function flyCoins(fromRect, count = 5) {
     };
   }
 }
+
+// ---------- Juicy visual feedback ----------
+
+let fxLayer = null;
+function layer() {
+  if (!fxLayer || !fxLayer.isConnected) {
+    fxLayer = el('div', { class: 'fx-layer' });
+    document.body.append(fxLayer);
+  }
+  return fxLayer;
+}
+
+const BURST_COLORS = ['#ffe08a', '#fad0d8', '#f19bb0', '#aee0d1', '#ffffff', '#cdeaf7'];
+
+// Little pixel confetti bursting out from (x, y) in screen coordinates.
+export function burst(x, y, { count = 10, colors = BURST_COLORS, spread = 46, size = 5, stars = 2 } = {}) {
+  const host = layer();
+  for (let i = 0; i < count; i++) {
+    const p = el('div', { class: 'particle' });
+    const s = size + Math.floor(Math.random() * 3);
+    p.style.cssText = `left:${x}px;top:${y}px;width:${s}px;height:${s}px;background:${colors[i % colors.length]}`;
+    host.append(p);
+    const a = (Math.PI * 2 * i) / count + Math.random() * 0.5;
+    const d = spread * (0.6 + Math.random() * 0.6);
+    p.animate(
+      [
+        { transform: 'translate(-50%,-50%) scale(1)', opacity: 1 },
+        {
+          transform: `translate(calc(-50% + ${Math.cos(a) * d}px), calc(-50% + ${Math.sin(a) * d}px)) scale(0.4)`,
+          opacity: 0,
+        },
+      ],
+      { duration: 420 + Math.random() * 200, easing: 'cubic-bezier(.2,.8,.3,1)' },
+    ).onfinish = () => p.remove();
+  }
+  for (let i = 0; i < stars; i++) {
+    const st = icon('sparkle', 22, 'particle-star');
+    st.style.left = x + (Math.random() - 0.5) * spread + 'px';
+    st.style.top = y + (Math.random() - 0.5) * spread + 'px';
+    host.append(st);
+    st.animate(
+      [
+        { transform: 'translate(-50%,-50%) scale(0.2) rotate(0deg)', opacity: 1 },
+        { transform: 'translate(-50%,-50%) scale(1.2) rotate(90deg)', opacity: 1, offset: 0.5 },
+        { transform: 'translate(-50%,-50%) scale(0.2) rotate(180deg)', opacity: 0 },
+      ],
+      { duration: 600, delay: i * 80, easing: 'ease-out' },
+    ).onfinish = () => st.remove();
+  }
+}
+
+// Expanding ring, like a soft shockwave.
+export function ring(x, y, size = 60, color = '#ffffff') {
+  const r = el('div', { class: 'ring' });
+  r.style.cssText = `left:${x}px;top:${y}px;width:${size}px;height:${size}px;border-color:${color}`;
+  layer().append(r);
+  r.animate(
+    [
+      { transform: 'translate(-50%,-50%) scale(0.3)', opacity: 0.9 },
+      { transform: 'translate(-50%,-50%) scale(1.3)', opacity: 0 },
+    ],
+    { duration: 380, easing: 'ease-out' },
+  ).onfinish = () => r.remove();
+}
+
+// Floating "+5" style text that drifts up and fades.
+export function floatText(x, y, text, { color = '#6b4a4a', iconName = null } = {}) {
+  const t = el('div', { class: 'float-text' }, iconName ? icon(iconName, 18) : null, text);
+  t.style.cssText = `left:${x}px;top:${y}px;color:${color}`;
+  layer().append(t);
+  t.animate(
+    [
+      { transform: 'translate(-50%,-30%) scale(0.6)', opacity: 0 },
+      { transform: 'translate(-50%,-90%) scale(1.15)', opacity: 1, offset: 0.25 },
+      { transform: 'translate(-50%,-200%) scale(1)', opacity: 0 },
+    ],
+    { duration: 900, easing: 'ease-out' },
+  ).onfinish = () => t.remove();
+}
+
+// Quick nudge of an element (a "thump" you can see).
+export function thump(elem, px = 3) {
+  elem.animate([{ transform: 'translateY(0)' }, { transform: `translateY(${px}px)` }, { transform: 'translateY(0)' }], {
+    duration: 140,
+    easing: 'ease-out',
+  });
+}
+
+export function center(elem) {
+  const r = elem.getBoundingClientRect();
+  return [r.left + r.width / 2, r.top + r.height / 2];
+}

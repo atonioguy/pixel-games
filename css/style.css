@@ -724,3 +724,190 @@ img,
     display: none;
   }
 }
+
+/* ---------- Effects ---------- */
+
+.fx-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 45;
+  overflow: hidden;
+}
+.particle,
+.particle-star,
+.ring,
+.float-text {
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+.particle {
+  box-shadow: 0 0 0 1px rgba(107, 74, 74, 0.35);
+}
+.ring {
+  border: 4px solid;
+  border-radius: 50%;
+}
+.float-text {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 24px;
+  white-space: nowrap;
+  text-shadow:
+    2px 0 #fffaf3,
+    -2px 0 #fffaf3,
+    0 2px #fffaf3,
+    0 -2px #fffaf3;
+}
+
+button.pressed {
+  transform: translateY(2px) scale(0.97);
+  filter: brightness(0.97);
+}
+.toggles {
+  display: flex;
+  gap: 4px;
+}
+
+/* ---------- Merge Kitchen: feel ---------- */
+
+.cell .piece {
+  transition: transform 0.1s ease-out;
+}
+.cell.press .piece {
+  transform: scale(0.84);
+}
+.cell.boing .piece {
+  animation: boing 0.4s ease-out;
+}
+@keyframes boing {
+  0% {
+    transform: scale(0.84);
+  }
+  35% {
+    transform: scale(1.18, 0.9);
+  }
+  60% {
+    transform: scale(0.94, 1.08);
+  }
+}
+.cell.land .piece {
+  animation: land 0.3s ease-out;
+}
+@keyframes land {
+  0% {
+    transform: translateY(-6px);
+  }
+  50% {
+    transform: scale(1.15, 0.85);
+  }
+}
+.cell.jump .piece {
+  animation: jump 0.45s ease-out;
+}
+@keyframes jump {
+  40% {
+    transform: translateY(-9px) scale(1.08);
+  }
+  70% {
+    transform: translateY(0) scale(1.1, 0.9);
+  }
+}
+.cell.shake::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(232, 96, 111, 0.25);
+  animation: fade 0.35s ease-out forwards;
+}
+@keyframes fade {
+  to {
+    opacity: 0;
+  }
+}
+.cell.match::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border: 3px dashed var(--mint-d);
+  animation: march 0.6s steps(2) infinite;
+  pointer-events: none;
+}
+.cell.match .piece {
+  animation: wiggle 0.5s ease-in-out infinite;
+}
+@keyframes march {
+  50% {
+    border-color: #aee0d1;
+  }
+}
+@keyframes wiggle {
+  25% {
+    transform: rotate(-6deg);
+  }
+  75% {
+    transform: rotate(6deg);
+  }
+}
+.cell.over.merge .piece {
+  animation: none;
+  transform: scale(1.22);
+}
+.cell.over.merge::after {
+  background: rgba(174, 224, 209, 0.55);
+  box-shadow: inset 0 0 0 3px var(--mint-d);
+}
+.drag-ghost img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  animation: carry 0.5s ease-in-out infinite alternate;
+}
+@keyframes carry {
+  from {
+    transform: rotate(-7deg) translateY(0);
+  }
+  to {
+    transform: rotate(7deg) translateY(-3px);
+  }
+}
+
+.order.ready .order-cust .px-icon {
+  animation: happy 0.7s ease-in-out infinite;
+}
+@keyframes happy {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+.order.wants {
+  background: #fff4f6;
+}
+.order.can-drop {
+  background: #e6f8f1;
+  animation: glow 0.6s ease-in-out infinite alternate;
+}
+@keyframes glow {
+  to {
+    background: #c9efe2;
+  }
+}
+.order.hover {
+  transform: scale(1.07);
+  transition: transform 0.1s;
+}
+.xp-track.flash {
+  animation: xpflash 0.5s ease-out;
+}
+@keyframes xpflash {
+  30% {
+    box-shadow:
+      0 0 0 3px var(--ink),
+      0 0 0 7px #ffe08a;
+  }
+}

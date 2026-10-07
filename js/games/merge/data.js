@@ -3,14 +3,15 @@
 export const COLS = 7;
 export const ROWS = 9;
 
-export const ENERGY_MAX = 40;
-export const ENERGY_REGEN_MS = 30 * 1000; // +1 energy every 30 seconds
-export const REFILL_COST = 30; // coins to refill energy
+export const ENERGY_MAX = 100;
+export const ENERGY_REGEN_MS = 2 * 60 * 1000; // +1 energy every 2 minutes
+export const REFILL_COST = 50; // coins to refill energy
 
 // Each chain has a generator (tap it to make level-1 items) and items that merge upward.
 // `unlock` is the kitchen level that unlocks the generator.
 export const CHAINS = {
   bakery: {
+    colors: ['#e7ae6e', '#ffe08a', '#fbefd9', '#fffaf3'],
     name: 'Bakery',
     gen: 'gen_bakery',
     genName: 'Bread Basket',
@@ -26,6 +27,7 @@ export const CHAINS = {
     ],
   },
   dairy: {
+    colors: ['#d3ecf7', '#fffaf3', '#f19bb0', '#86bfe0'],
     name: 'Dairy',
     gen: 'gen_dairy',
     genName: 'Mini Fridge',
@@ -39,6 +41,7 @@ export const CHAINS = {
     ],
   },
   fruit: {
+    colors: ['#e8606f', '#f19bb0', '#b3de95', '#fad0d8'],
     name: 'Fruit',
     gen: 'gen_fruit',
     genName: 'Fruit Crate',
@@ -52,6 +55,7 @@ export const CHAINS = {
     ],
   },
   eggs: {
+    colors: ['#ffe08a', '#f5b94a', '#fffaf3', '#e8606f'],
     name: 'Eggs',
     gen: 'gen_eggs',
     genName: 'Hen',
@@ -65,6 +69,7 @@ export const CHAINS = {
     ],
   },
   drinks: {
+    colors: ['#aee0d1', '#6fb5a3', '#fad0d8', '#efd3a8'],
     name: 'Drinks',
     gen: 'gen_drinks',
     genName: 'Teapot',

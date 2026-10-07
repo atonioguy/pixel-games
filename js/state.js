@@ -4,7 +4,7 @@
 const KEY = 'cozy-arcade-save-v1';
 
 function defaults() {
-  return { version: 1, coins: 50, settings: { sound: true }, games: {} };
+  return { version: 1, coins: 50, settings: { sound: true, haptics: true }, games: {} };
 }
 
 function load() {

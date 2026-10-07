@@ -2,6 +2,7 @@
 import { save } from './state.js';
 import { el, icon, toast } from './ui.js';
 import { sfx, unlockAudio } from './audio.js';
+import { haptic } from './haptics.js';
 import { tileURL } from './pixel.js';
 import { WALLPAPER, WOOD } from './sprites.js';
 
@@ -52,19 +53,41 @@ function coinPill() {
   return pill;
 }
 
-function soundButton() {
-  const b = el('button', { class: 'icon-btn', 'aria-label': 'Sound' });
-  const paint = () => {
-    b.replaceChildren(icon('speaker', 24, save.settings.sound ? '' : 'muted'));
-  };
+function toggleButton(setting, iconName, label) {
+  const b = el('button', { class: 'icon-btn', 'aria-label': label });
+  const paint = () => b.replaceChildren(icon(iconName, 24, save.settings[setting] ? '' : 'muted'));
   paint();
   b.addEventListener('click', () => {
-    save.setSetting('sound', !save.settings.sound);
+    save.setSetting(setting, !save.settings[setting]);
     paint();
     sfx.tap();
+    haptic(2);
   });
   return b;
 }
+
+// Every button gets a soft click + a haptic tick.
+document.addEventListener(
+  'click',
+  (e) => {
+    if (e.target.closest?.('button')) haptic(1);
+  },
+  true,
+);
+
+// Buttons squish down while pressed, for visual "feel".
+document.addEventListener('pointerdown', (e) => {
+  const b = e.target.closest?.('button');
+  if (!b) return;
+  b.classList.add('pressed');
+  const up = () => {
+    b.classList.remove('pressed');
+    removeEventListener('pointerup', up);
+    removeEventListener('pointercancel', up);
+  };
+  addEventListener('pointerup', up);
+  addEventListener('pointercancel', up);
+});
 
 let cleanup = null;
 let pill = null;
@@ -79,7 +102,15 @@ function showMenu() {
   cleanup?.();
   cleanup = null;
   app.dataset.screen = 'menu';
-  setTop(el('div', { class: 'brand' }, icon('heart', 22), 'Cozy Arcade'), soundButton());
+  setTop(
+    el('div', { class: 'brand' }, icon('heart', 22), 'Cozy Arcade'),
+    el(
+      'div',
+      { class: 'toggles' },
+      toggleButton('haptics', 'vibe', 'Vibration'),
+      toggleButton('sound', 'speaker', 'Sound'),
+    ),
+  );
 
   const list = el('div', { class: 'game-list' });
   for (const g of GAMES) {
