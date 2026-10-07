@@ -1,10 +1,13 @@
 // App shell: top bar with shared coins, the game menu, and switching between games.
-import { save } from './state.js';
-import { el, icon, toast } from './ui.js';
+import { save, ready as saveReady } from './state.js';
+import { el, icon, toast, sheet } from './ui.js';
 import { sfx, unlockAudio } from './audio.js';
 import { haptic } from './haptics.js';
 import { tileURL } from './pixel.js';
 import { WALLPAPER, WOOD } from './sprites.js';
+
+// Shown on the menu so it's easy to tell which version is running. Bump with sw.js VERSION.
+const APP_VERSION = 6;
 
 const GAMES = [
   {
@@ -159,9 +162,70 @@ function showMenu() {
         el('div', { class: 'sign-sub' }, 'pick a game ♡'),
       ),
       list,
+      el(
+        'div',
+        { class: 'menu-foot' },
+        el('button', { class: 'px-btn ghost small', onclick: openBackup }, 'Backup & restore'),
+        el('div', { class: 'version' }, `version ${APP_VERSION}`),
+      ),
     ),
     el('div', { class: 'floor' }),
   );
+}
+
+// Lets the player copy their whole save as a code, and paste it back later
+// (e.g. before deleting and re-adding the home-screen icon, which wipes app data).
+function openBackup() {
+  sfx.open();
+  sheet('Backup', () => {
+    const code = save.exportBackup();
+    const out = el('textarea', { class: 'backup-box', readonly: '', rows: 3 }, code);
+    const input = el('textarea', { class: 'backup-box', rows: 3, placeholder: 'Paste a backup code here' });
+    return [
+      el(
+        'p',
+        { class: 'backup-note' },
+        'Copy this code and keep it somewhere safe (like Notes). It has all your coins and progress.',
+      ),
+      out,
+      el(
+        'button',
+        {
+          class: 'px-btn',
+          onclick: async () => {
+            try {
+              await navigator.clipboard.writeText(code);
+              toast('Backup copied!', 'heart');
+            } catch {
+              out.focus();
+              out.select();
+              toast('Select the text and copy it', 'heart');
+            }
+          },
+        },
+        'Copy backup code',
+      ),
+      el('p', { class: 'backup-note' }, 'To restore, paste a code below. This replaces your current progress.'),
+      input,
+      el(
+        'button',
+        {
+          class: 'px-btn pink',
+          onclick: () => {
+            if (!input.value.trim()) return;
+            if (save.importBackup(input.value)) {
+              toast('Restored!', 'heart');
+              setTimeout(() => location.reload(), 500);
+            } else {
+              sfx.error();
+              toast("That code didn't work", 'lock');
+            }
+          },
+        },
+        'Restore',
+      ),
+    ];
+  });
 }
 
 async function showGame(id) {
@@ -187,7 +251,7 @@ function route() {
 }
 
 addEventListener('hashchange', route);
-route();
+saveReady.then(route);
 
 // Offline support + "Add to Home Screen" app behaviour.
 if ('serviceWorker' in navigator && location.protocol === 'https:') {

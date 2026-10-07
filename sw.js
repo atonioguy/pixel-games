@@ -2,7 +2,7 @@
 // Online: always loads the latest version (and saves a copy).
 // Offline: falls back to the saved copy.
 // Bump VERSION whenever the file list changes.
-const VERSION = 'cozy-v5';
+const VERSION = 'cozy-v6';
 const FILES = [
   './',
   './index.html',
@@ -47,7 +47,9 @@ self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
   e.respondWith(
-    fetch(req)
+    // 'no-cache' makes the browser re-check with the server every time (cheap when nothing
+    // changed), so a new version shows up on the next launch instead of up to 10 min later.
+    fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' })
       .then((res) => {
         if (res.ok) {
           const copy = res.clone();

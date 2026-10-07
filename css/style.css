@@ -1209,3 +1209,34 @@ button.pressed {
   font-size: 13px;
   color: var(--mint-d);
 }
+
+.menu-foot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 18px;
+}
+.version {
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+.backup-note {
+  font-size: 16px;
+  color: var(--ink-soft);
+  margin: 6px 2px;
+}
+.backup-box {
+  width: 100%;
+  font:
+    14px ui-monospace,
+    monospace;
+  color: var(--ink);
+  background: var(--cream);
+  border: 3px solid var(--ink);
+  padding: 6px;
+  margin-bottom: 6px;
+  -webkit-user-select: text;
+  user-select: text;
+  resize: none;
+}
