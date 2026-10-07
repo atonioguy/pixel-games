@@ -23,7 +23,7 @@ export const CHAINS = {
       { id: 'bun', name: 'Bun' },
       { id: 'toast', name: 'Toast' },
       { id: 'croissant', name: 'Croissant' },
-      { id: 'cake', name: 'Strawberry Cake' },
+      { id: 'cake', name: 'Shortcake' },
     ],
   },
   dairy: {

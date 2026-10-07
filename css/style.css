@@ -488,7 +488,8 @@ img,
   justify-content: center;
   gap: 3px;
   margin: 5px -4px 0;
-  padding: 3px 0;
+  height: 30px;
+  padding: 0;
   font-size: 20px;
   background: var(--cream);
   border-top: 3px solid var(--ink);
@@ -680,17 +681,25 @@ img,
   filter: drop-shadow(0 6px 0 rgba(107, 74, 74, 0.3));
 }
 
+/* Fixed height on purpose: if this box grew or shrank with its text, the board above
+   would resize and the whole screen would jump. Text is clamped to fit instead. */
 .info {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 74px;
+  flex: none;
+  height: 88px;
+  overflow: hidden;
   padding: 8px 10px;
   margin: 3px 3px 6px;
 }
 .info-hint {
   font-size: 20px;
-  line-height: 1.35;
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
   color: var(--ink-soft);
 }
 .info-hint .px-icon {
@@ -706,6 +715,13 @@ img,
   flex: 1;
   min-width: 0;
 }
+.info-name,
+.info-sub {
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .info-name {
   font-size: 23px;
 }
@@ -713,13 +729,23 @@ img,
   font-size: 17px;
   color: var(--ink-soft);
 }
+.info-desc {
+  font-size: 17px;
+  line-height: 1.15;
+  color: var(--ink-soft);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
 .info-sub .px-icon {
   vertical-align: -2px;
 }
 .chain {
   display: flex;
-  flex-wrap: wrap;
-  gap: 2px;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  gap: 1px;
   margin-top: 3px;
 }
 .chain .unknown {
@@ -1070,7 +1096,7 @@ button.pressed {
   animation: happy 0.8s ease-in-out infinite;
 }
 .aq-info {
-  min-height: 82px;
+  height: 104px;
 }
 .info-btns {
   display: flex;

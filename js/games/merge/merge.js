@@ -354,7 +354,7 @@ export function mount(root, { headerSlot }) {
     return el(
       'div',
       { class: 'chain' },
-      CHAINS[c].items.map((item, idx) => icon(idx < disc ? item.id : 'question', 18, idx < disc ? '' : 'unknown')),
+      CHAINS[c].items.map((item, idx) => icon(idx < disc ? item.id : 'question', 16, idx < disc ? '' : 'unknown')),
     );
   }
 
@@ -939,8 +939,8 @@ export function mount(root, { headerSlot }) {
   function layout() {
     const w = boardWrap.clientWidth - 12;
     const h = boardWrap.clientHeight - 12;
-    const size = Math.max(24, Math.floor(Math.min(w / COLS, h / ROWS)));
-    board.style.setProperty('--cell', size + 'px');
+    const size = Math.max(24, Math.floor(Math.min(w / COLS, h / ROWS))) + 'px';
+    if (board.style.getPropertyValue('--cell') !== size) board.style.setProperty('--cell', size);
   }
   const ro = new ResizeObserver(layout);
   ro.observe(boardWrap);

@@ -302,7 +302,10 @@ export function mount(root, { headerSlot }) {
     const frame = 12;
     const cssScale = Math.min((r.width - frame) / W, (r.height - frame) / H);
     const dpr = window.devicePixelRatio || 1;
-    k = Math.max(1, Math.floor(cssScale * dpr));
+    const nk = Math.max(1, Math.floor(cssScale * dpr));
+    // Resizing a canvas wipes it (a visible blink), so only do it when the size really changes.
+    if (nk === k && canvas.width === W * k) return;
+    k = nk;
     canvas.width = W * k;
     canvas.height = H * k;
     canvas.style.width = (W * k) / dpr + 'px';
@@ -589,7 +592,7 @@ export function mount(root, { headerSlot }) {
           'div',
           { class: 'info-text' },
           el('div', { class: 'info-name' }, 'Feeding time!'),
-          el('div', { class: 'info-sub' }, 'Tap the water to sprinkle food. Too much makes the tank dirty.'),
+          el('div', { class: 'info-desc' }, 'Tap the water to drop food. Not too much!'),
         ),
         el('button', { class: 'px-btn', onclick: () => setMode('look') }, 'Done'),
       );
@@ -602,7 +605,7 @@ export function mount(root, { headerSlot }) {
           'div',
           { class: 'info-text' },
           el('div', { class: 'info-name' }, 'Scrub scrub!'),
-          el('div', { class: 'info-sub' }, 'Rub the glass with your finger to wipe away the gunk.'),
+          el('div', { class: 'info-desc' }, 'Rub the glass to wipe off the gunk!'),
         ),
         el('button', { class: 'px-btn', onclick: () => setMode('look') }, 'Done'),
       );
@@ -635,11 +638,8 @@ export function mount(root, { headerSlot }) {
           'div',
           { class: 'info-text' },
           el('div', { class: 'info-name' }, sp.name),
-          el(
-            'div',
-            { class: 'info-sub' },
-            `${stars(sp.rarity)} ${rarity.name} visitor · leaves in ${timeLeft(v.until - Date.now())}`,
-          ),
+          el('div', { class: 'info-sub' }, `${'★'.repeat(sp.rarity)} ${rarity.name}`),
+          el('div', { class: 'info-sub' }, `Leaves in ${timeLeft(v.until - Date.now())}`),
         ),
         el(
           'div',
@@ -661,7 +661,7 @@ export function mount(root, { headerSlot }) {
         'div',
         { class: 'info-text' },
         el('div', { class: 'info-name' }, r.name),
-        el('div', { class: 'info-sub' }, `${sp.name} · ${stars(sp.rarity)}`),
+        el('div', { class: 'info-sub' }, `${sp.name} ${'★'.repeat(sp.rarity)}`),
         el('div', { class: 'stat-row' }, el('span', {}, 'Happy'), heartsRow(happiness(s, r))),
         el('div', { class: 'stat-row' }, el('span', {}, 'Full'), heartsRow(r.hunger)),
       ),
