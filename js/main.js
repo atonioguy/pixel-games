@@ -7,7 +7,7 @@ import { tileURL } from './pixel.js';
 import { WALLPAPER, WOOD } from './sprites.js';
 
 // Shown on the menu so it's easy to tell which version is running. Bump with sw.js VERSION.
-const APP_VERSION = 6;
+const APP_VERSION = 7;
 
 const GAMES = [
   {

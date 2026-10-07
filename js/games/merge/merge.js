@@ -1,7 +1,21 @@
 // Merge Kitchen: tap generators to make ingredients, drag matching items together to
-// merge them into better dishes, and serve customers' orders for coins.
+// merge them into better dishes, cook ingredients from different generators together in
+// appliances, and serve customers' orders for coins.
 import { save } from '../../state.js';
-import { el, icon, spriteSrc, toast, confirmBox, flyCoins, burst, ring, floatText, thump, center } from '../../ui.js';
+import {
+  el,
+  icon,
+  spriteSrc,
+  toast,
+  confirmBox,
+  flyCoins,
+  burst,
+  ring,
+  floatText,
+  thump,
+  center,
+  sheet,
+} from '../../ui.js';
 import { sfx } from '../../audio.js';
 import { haptic } from '../../haptics.js';
 import {
@@ -13,11 +27,19 @@ import {
   ENERGY_MAX,
   ENERGY_REGEN_MS,
   REFILL_COST,
+  LEVELUP_ENERGY,
   GEN_HOME,
   STARTER,
+  APPLIANCES,
+  APP_IDS,
+  APP_HOME,
+  RECIPES,
+  RECIPE_IDS,
   xpForLevel,
   orderValue,
   sellValue,
+  dishValue,
+  dishXP,
 } from './data.js';
 
 const N = COLS * ROWS;
@@ -28,7 +50,25 @@ const keyOf = (c, l) => c + ':' + l;
 const maxLevel = (c) => CHAINS[c].items.length;
 const itemSprite = (c, l) => CHAINS[c].items[l - 1].id;
 const itemName = (c, l) => CHAINS[c].items[l - 1].name;
-const spriteOf = (it) => (it.t === 'gen' ? CHAINS[it.c].gen : itemSprite(it.c, it.l));
+
+// Board things: {t:'gen',c} generator, {t:'app',a,load,cook,out} appliance,
+// {t:'item',c,l} ingredient, {t:'dish',d} cooked dish.
+function spriteOf(it) {
+  if (it.t === 'gen') return CHAINS[it.c].gen;
+  if (it.t === 'app') return APPLIANCES[it.a].sprite;
+  if (it.t === 'dish') return RECIPES[it.d].sprite;
+  return itemSprite(it.c, it.l);
+}
+const isServable = (it) => it && (it.t === 'item' || it.t === 'dish');
+const itemKey = (it) => (it.t === 'dish' ? 'd:' + it.d : keyOf(it.c, it.l));
+
+// Order requests are either {c, l} (an ingredient) or {d} (a dish).
+const reqKey = (r) => (r.d ? 'd:' + r.d : keyOf(r.c, r.l));
+const reqSprite = (r) => (r.d ? RECIPES[r.d].sprite : itemSprite(r.c, r.l));
+const reqName = (r) => (r.d ? RECIPES[r.d].name : itemName(r.c, r.l));
+const reqCoins = (r) => (r.d ? dishValue(r.d) : orderValue(r.l));
+const reqXP = (r) => (r.d ? dishXP(r.d) : r.l * 2);
+const thingName = (it) => (it.t === 'dish' ? RECIPES[it.d].name : itemName(it.c, it.l));
 
 // ---------- State helpers (pure-ish, operate on the save object) ----------
 
@@ -40,9 +80,12 @@ function newState() {
     level: 1,
     xp: 0,
     discovered: {},
+    dishes: {},
     orders: [],
     orderSeq: 0,
     pendingGens: [],
+    pendingApps: [],
+    energyV2: true,
   };
   for (const id of CHAIN_IDS) if (CHAINS[id].unlock <= 1) placeGen(s, id);
   for (const [i, c, l] of STARTER) {
@@ -86,6 +129,21 @@ function placeGen(s, id) {
   return i;
 }
 
+function placeApp(s, id) {
+  const [r, c] = APP_HOME[id];
+  let i = r * COLS + c;
+  if (s.board[i]) i = nearestEmpty(s, i);
+  if (i < 0) {
+    if (!s.pendingApps.includes(id)) s.pendingApps.push(id);
+    return -1;
+  }
+  s.board[i] = { t: 'app', a: id, load: [], cook: null, out: null };
+  s.pendingApps = s.pendingApps.filter((x) => x !== id);
+  return i;
+}
+
+const hasApp = (s, id) => s.board.some((it) => it && it.t === 'app' && it.a === id) || s.pendingApps.includes(id);
+
 function syncEnergy(s) {
   const now = Date.now();
   if (s.energy >= ENERGY_MAX) {
@@ -99,9 +157,33 @@ function syncEnergy(s) {
   }
 }
 
+// Does `load` (ingredients already in the appliance) fit inside this recipe?
+function recipeFits(rec, load) {
+  const need = new Map();
+  for (const [c, l] of rec.needs) need.set(keyOf(c, l), (need.get(keyOf(c, l)) || 0) + 1);
+  for (const x of load) {
+    const k = keyOf(x.c, x.l);
+    const n = need.get(k) || 0;
+    if (!n) return false;
+    need.set(k, n - 1);
+  }
+  return true;
+}
+const recipeDone = (rec, load) => rec.needs.length === load.length && recipeFits(rec, load);
+
 function randomRequest(s) {
+  // Sometimes ask for a cooked dish from an appliance the player has.
+  const dishes = RECIPE_IDS.filter((d) => s.board.some((it) => it && it.t === 'app' && it.a === RECIPES[d].app));
+  if (dishes.length && Math.random() < 0.4) {
+    const req = [{ d: pick(dishes) }];
+    if (s.level >= 5 && Math.random() < 0.25) req.push(...randomItems(s, 1));
+    return req;
+  }
+  return randomItems(s, s.level >= 2 && Math.random() < 0.45 ? 2 : 1);
+}
+
+function randomItems(s, count) {
   const unlocked = CHAIN_IDS.filter((id) => CHAINS[id].unlock <= s.level);
-  const count = s.level >= 2 && Math.random() < 0.45 ? 2 : 1;
   const req = [];
   for (let n = 0; n < count; n++) {
     const c = pick(unlocked);
@@ -114,17 +196,17 @@ function randomRequest(s) {
 
 function makeOrder(s) {
   // Try a few times to avoid asking for the same thing as an existing order.
-  const current = new Set(s.orders.flatMap((o) => o.req.map((r) => keyOf(r.c, r.l))));
+  const current = new Set(s.orders.flatMap((o) => o.req.map(reqKey)));
   let req = randomRequest(s);
-  for (let tries = 0; tries < 8 && req.some((r) => current.has(keyOf(r.c, r.l))); tries++) req = randomRequest(s);
+  for (let tries = 0; tries < 8 && req.some((r) => current.has(reqKey(r))); tries++) req = randomRequest(s);
   const taken = new Set(s.orders.map((o) => o.cust));
   const free = CUSTOMERS.map((_, i) => i).filter((i) => !taken.has(i));
   return {
     id: ++s.orderSeq,
     cust: pick(free.length ? free : CUSTOMERS.map((_, i) => i)),
     req,
-    coins: req.reduce((a, r) => a + orderValue(r.l), 0),
-    xp: req.reduce((a, r) => a + r.l * 2, 0),
+    coins: req.reduce((a, r) => a + reqCoins(r), 0),
+    xp: req.reduce((a, r) => a + reqXP(r), 0),
   };
 }
 
@@ -134,13 +216,13 @@ function ensureOrders(s) {
 
 function boardCounts(s) {
   const m = new Map();
-  for (const it of s.board) if (it && it.t === 'item') m.set(keyOf(it.c, it.l), (m.get(keyOf(it.c, it.l)) || 0) + 1);
+  for (const it of s.board) if (isServable(it)) m.set(itemKey(it), (m.get(itemKey(it)) || 0) + 1);
   return m;
 }
 
 function orderNeeds(o) {
   const need = new Map();
-  for (const r of o.req) need.set(keyOf(r.c, r.l), (need.get(keyOf(r.c, r.l)) || 0) + 1);
+  for (const r of o.req) need.set(reqKey(r), (need.get(reqKey(r)) || 0) + 1);
   return need;
 }
 
@@ -167,7 +249,12 @@ export function mount(root, { headerSlot }) {
     s.energyAt = Date.now();
     s.energyV2 = true;
   }
+  // Older saves: add fields for appliances.
+  s.dishes ||= {};
+  s.pendingApps ||= [];
+  for (const id of APP_IDS) if (APPLIANCES[id].unlock <= s.level && !hasApp(s, id)) placeApp(s, id);
   syncEnergy(s);
+  finishCooking();
   ensureOrders(s);
 
   let selected = -1;
@@ -224,16 +311,46 @@ export function mount(root, { headerSlot }) {
     if (it.t === 'gen') {
       cell.classList.add('gen');
       cell.append(el('span', { class: 'badge gen-badge' }, icon('bolt', 14)));
-    } else if (wanted.has(keyOf(it.c, it.l))) {
+    } else if (it.t === 'app') {
+      cell.classList.add('app');
+      if (it.out) {
+        cell.classList.add('done');
+        cell.append(el('span', { class: 'app-out' }, icon(RECIPES[it.out].sprite, 22)));
+      } else if (it.cook) {
+        cell.classList.add('cooking');
+        cell.append(el('span', { class: 'badge' }, icon('timer', 14)), el('span', { class: 'app-bar' }, el('i')));
+        updateBar(i);
+      } else if (it.load.length) {
+        cell.append(
+          el(
+            'span',
+            { class: 'app-load' },
+            it.load.map((x) => icon(itemSprite(x.c, x.l), 12)),
+          ),
+        );
+      }
+    } else if (wanted.has(itemKey(it))) {
       cell.classList.add('wanted');
       cell.append(el('span', { class: 'badge want-badge' }, icon('heart', 14)));
+    } else if (it.t === 'dish') {
+      cell.classList.add('dish');
     } else if (it.l === maxLevel(it.c)) {
       cell.append(el('span', { class: 'badge max-badge' }, icon('star', 14)));
     }
   }
 
+  // Cooking progress bar on an appliance cell
+  function updateBar(i) {
+    const it = s.board[i];
+    const bar = cells[i].querySelector('.app-bar i');
+    if (!bar || !it?.cook) return;
+    const total = RECIPES[it.cook.d].secs * 1000;
+    const left = Math.max(0, it.cook.done - Date.now());
+    bar.style.width = (100 * (1 - left / total)).toFixed(1) + '%';
+  }
+
   function renderBoard() {
-    wanted = new Set(s.orders.flatMap((o) => o.req.map((r) => keyOf(r.c, r.l))));
+    wanted = new Set(s.orders.flatMap((o) => o.req.map(reqKey)));
     for (let i = 0; i < N; i++) renderCell(i);
   }
 
@@ -256,14 +373,14 @@ export function mount(root, { headerSlot }) {
   function fillCard(card, o, counts, ready) {
     const used = new Map();
     const reqs = o.req.map((r) => {
-      const k = keyOf(r.c, r.l);
+      const k = reqKey(r);
       const nth = (used.get(k) || 0) + 1;
       used.set(k, nth);
       const have = (counts.get(k) || 0) >= nth;
       return el(
         'div',
-        { class: 'req' + (have ? ' have' : '') },
-        icon(itemSprite(r.c, r.l), 32),
+        { class: 'req' + (have ? ' have' : '') + (r.d ? ' is-dish' : '') },
+        icon(reqSprite(r), 32),
         have ? icon('check', 16, 'req-check') : null,
       );
     });
@@ -341,7 +458,7 @@ export function mount(root, { headerSlot }) {
         // The items that complete it do a little jump on the board too.
         const o = s.orders.find((x) => x.id === +e.card.dataset.id);
         for (const r of o.req) {
-          const i = s.board.findIndex((it) => it && it.t === 'item' && it.c === r.c && it.l === r.l);
+          const i = s.board.findIndex((it) => isServable(it) && itemKey(it) === reqKey(r));
           if (i >= 0) anim(i, 'jump');
         }
       }
@@ -385,13 +502,18 @@ export function mount(root, { headerSlot }) {
       );
       return;
     }
-    const value = sellValue(it.l);
+    if (it.t === 'app') {
+      renderAppInfo(it);
+      return;
+    }
+    const isDish = it.t === 'dish';
+    const value = isDish ? Math.round(dishValue(it.d) / 4) : sellValue(it.l);
     const sellBtn = el(
       'button',
       {
         class: 'px-btn pink sell',
         onclick: () => {
-          if (it.l >= 3 && !sellArmed) {
+          if ((isDish || it.l >= 3) && !sellArmed) {
             sellArmed = true;
             sellBtn.replaceChildren('Sure?');
             sfx.tap();
@@ -404,6 +526,24 @@ export function mount(root, { headerSlot }) {
       icon('coin', 16),
       String(value),
     );
+    if (isDish) {
+      info.replaceChildren(
+        el('div', { class: 'info-icon' }, icon(RECIPES[it.d].sprite, 40)),
+        el(
+          'div',
+          { class: 'info-text' },
+          el('div', { class: 'info-name' }, RECIPES[it.d].name),
+          el('div', { class: 'info-sub' }, 'A cooked dish! Customers love these.'),
+          el(
+            'div',
+            { class: 'chain' },
+            RECIPES[it.d].needs.map(([c, l]) => icon(itemSprite(c, l), 16)),
+          ),
+        ),
+        sellBtn,
+      );
+      return;
+    }
     info.replaceChildren(
       el('div', { class: 'info-icon' }, icon(itemSprite(it.c, it.l), 40)),
       el(
@@ -418,6 +558,94 @@ export function mount(root, { headerSlot }) {
         chainPreview(it.c),
       ),
       sellBtn,
+    );
+  }
+
+  const mmss = (ms) => {
+    const t = Math.max(0, Math.ceil(ms / 1000));
+    return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+  };
+
+  function renderAppInfo(it) {
+    const app = APPLIANCES[it.a];
+    let sub;
+    let extra = null;
+    let btns = [el('button', { class: 'px-btn small', onclick: () => openRecipes(it.a) }, 'Recipes')];
+    if (it.out) {
+      sub = `${RECIPES[it.out].name} is ready! Tap to collect.`;
+      extra = el('div', { class: 'chain' }, icon(RECIPES[it.out].sprite, 18));
+    } else if (it.cook) {
+      sub = `${app.verb} ${RECIPES[it.cook.d].name}… ${mmss(it.cook.done - Date.now())}`;
+      extra = el('div', { class: 'chain' }, icon(RECIPES[it.cook.d].sprite, 18), icon('timer', 18));
+    } else if (it.load.length) {
+      sub = 'Add the rest of a recipe!';
+      extra = el(
+        'div',
+        { class: 'chain' },
+        it.load.map((x) => icon(itemSprite(x.c, x.l), 18)),
+      );
+      btns.push(el('button', { class: 'px-btn ghost small', onclick: () => eject(selected) }, 'Take out'));
+    } else {
+      sub = 'Drag ingredients in to cook!';
+    }
+    info.replaceChildren(
+      el('div', { class: 'info-icon' }, icon(app.sprite, 40)),
+      el(
+        'div',
+        { class: 'info-text' },
+        el('div', { class: 'info-name' }, app.name),
+        el('div', { class: 'info-sub app-sub' }, sub),
+        extra,
+      ),
+      el('div', { class: 'info-btns' }, btns),
+    );
+  }
+
+  // Sheet listing what an appliance can make, with ticks for ingredients you already have.
+  function openRecipes(appId) {
+    sfx.open();
+    sheet(
+      `${APPLIANCES[appId].name} recipes`,
+      () => {
+        const counts = boardCounts(s);
+        return RECIPE_IDS.filter((d) => RECIPES[d].app === appId).map((d) => {
+          const rec = RECIPES[d];
+          const used = new Map();
+          return el(
+            'div',
+            { class: 'shop-row' },
+            el('div', { class: 'shop-icon recipe-icon' }, icon(rec.sprite, 40)),
+            el(
+              'div',
+              { class: 'shop-text' },
+              el('div', { class: 'shop-name' }, rec.name),
+              el(
+                'div',
+                { class: 'shop-sub' },
+                rec.needs.map(([c, l]) => {
+                  const k = keyOf(c, l);
+                  const nth = (used.get(k) || 0) + 1;
+                  used.set(k, nth);
+                  const have = (counts.get(k) || 0) >= nth;
+                  return el(
+                    'span',
+                    { class: 'need' + (have ? ' have' : '') },
+                    icon(itemSprite(c, l), 24),
+                    have ? icon('check', 12, 'req-check') : null,
+                  );
+                }),
+              ),
+            ),
+            el(
+              'div',
+              { class: 'recipe-meta' },
+              el('div', {}, icon('timer', 14), ` ${rec.secs}s`),
+              el('div', {}, icon('coin', 14), ` ${dishValue(d)}`),
+            ),
+          );
+        });
+      },
+      () => sfx.close(),
     );
   }
 
@@ -562,6 +790,7 @@ export function mount(root, { headerSlot }) {
     }
     select(i);
     if (it.t === 'gen') produce(i);
+    else if (it.t === 'app' && it.out) collect(i);
     else {
       sfx.tap();
       haptic(1);
@@ -573,6 +802,10 @@ export function mount(root, { headerSlot }) {
     const A = s.board[a];
     const B = s.board[b];
     if (!A) return;
+    if (B && B.t === 'app' && A.t === 'item') {
+      tryLoad(b, a);
+      return;
+    }
     if (B && A.t === 'item' && B.t === 'item' && A.c === B.c && A.l === B.l) {
       if (A.l >= maxLevel(A.c)) {
         toast('Already max level!', 'star');
@@ -610,8 +843,8 @@ export function mount(root, { headerSlot }) {
 
   function sell(i) {
     const it = s.board[i];
-    if (!it || it.t !== 'item') return;
-    const value = sellValue(it.l);
+    if (!isServable(it)) return;
+    const value = it.t === 'dish' ? Math.round(dishValue(it.d) / 4) : sellValue(it.l);
     const rect = cells[i].getBoundingClientRect();
     const [x, y] = center(cells[i]);
     s.board[i] = null;
@@ -644,8 +877,10 @@ export function mount(root, { headerSlot }) {
       ],
       { duration: 260 },
     );
-    const names = o.req.map((r) => itemName(r.c, r.l)).join(' + ');
-    toast(`${CUSTOMERS[o.cust].name} wants ${names}`, CUSTOMERS[o.cust].sprite);
+    const names = o.req.map(reqName).join(' + ');
+    const dish = o.req.find((r) => r.d);
+    const where = dish ? ` (cook it in the ${APPLIANCES[RECIPES[dish.d].app].name})` : '';
+    toast(`${CUSTOMERS[o.cust].name} wants ${names}${where}`, CUSTOMERS[o.cust].sprite);
   }
 
   // prefer: a board index to use first (e.g. the item that was dragged onto the order)
@@ -658,11 +893,11 @@ export function mount(root, { headerSlot }) {
       const matches = [];
       for (let i = 0; i < N; i++) {
         const it = s.board[i];
-        if (it && it.t === 'item' && it.c === r.c && it.l === r.l && !usedIdx.has(i)) matches.push(i);
+        if (isServable(it) && itemKey(it) === reqKey(r) && !usedIdx.has(i)) matches.push(i);
       }
       const idx = matches.includes(prefer) ? prefer : (matches.find((i) => i !== selected) ?? matches[0]);
       usedIdx.add(idx);
-      flySprite(itemSprite(r.c, r.l), cells[idx].getBoundingClientRect(), cardRect, n * 60);
+      flySprite(reqSprite(r), cells[idx].getBoundingClientRect(), cardRect, n * 60);
     });
     for (const idx of usedIdx) {
       if (idx === selected) selected = -1;
@@ -717,10 +952,12 @@ export function mount(root, { headerSlot }) {
   function levelUp(level) {
     const bonus = level * 10;
     save.addCoins(bonus);
-    s.energy = Math.max(s.energy, ENERGY_MAX);
     syncEnergy(s);
+    s.energy = Math.min(ENERGY_MAX, s.energy + LEVELUP_ENERGY);
     const unlocked = CHAIN_IDS.filter((id) => CHAINS[id].unlock > 1 && CHAINS[id].unlock <= level && !hasGen(id));
     for (const id of unlocked) placeGen(s, id);
+    const newApps = APP_IDS.filter((id) => APPLIANCES[id].unlock <= level && !hasApp(s, id));
+    for (const id of newApps) placeApp(s, id);
     afterBoardChange();
     renderEnergy();
     setTimeout(() => {
@@ -730,8 +967,10 @@ export function mount(root, { headerSlot }) {
       burst(x, y, { count: 24, spread: 150, stars: 6, size: 6 });
       ring(x, y, 220, '#ffe08a');
     }, 300);
-    const extra = unlocked.length ? ` New: ${unlocked.map((id) => CHAINS[id].genName).join(', ')}!` : '';
-    confirmBox(`Level ${level}!`, `+${bonus} coins and full energy.${extra}`, 'Yay!', null);
+    const names = [...unlocked.map((id) => CHAINS[id].genName), ...newApps.map((id) => APPLIANCES[id].name)];
+    const extra = names.length ? ` New: ${names.join(', ')}!` : '';
+    const tip = newApps.length ? ' Drag ingredients into appliances to cook dishes.' : '';
+    confirmBox(`Level ${level}!`, `+${bonus} coins and +${LEVELUP_ENERGY} energy.${extra}${tip}`, 'Yay!', null);
   }
 
   function hasGen(id) {
@@ -742,6 +981,103 @@ export function mount(root, { headerSlot }) {
     for (const id of [...s.pendingGens]) {
       if (placeGen(s, id) >= 0) toast(`${CHAINS[id].genName} arrived!`, CHAINS[id].gen);
     }
+    for (const id of [...s.pendingApps]) {
+      if (placeApp(s, id) >= 0) toast(`${APPLIANCES[id].name} arrived!`, APPLIANCES[id].sprite);
+    }
+  }
+
+  // --- Appliances ---
+
+  // Marks finished cooking as ready to collect. Pure state (safe to call before the DOM exists).
+  function finishCooking() {
+    const done = [];
+    s.board.forEach((it, i) => {
+      if (it && it.t === 'app' && it.cook && it.cook.done <= Date.now()) {
+        it.out = it.cook.d;
+        it.cook = null;
+        done.push(i);
+      }
+    });
+    return done;
+  }
+
+  function tryLoad(ai, ii) {
+    const app = s.board[ai];
+    const it = s.board[ii];
+    const A = APPLIANCES[app.a];
+    if (app.cook || app.out) {
+      nope(ii);
+      toast(app.out ? `Collect the ${RECIPES[app.out].name} first!` : `The ${A.name} is busy`, A.sprite);
+      return;
+    }
+    const next = [...app.load, { c: it.c, l: it.l }];
+    const options = RECIPE_IDS.filter((d) => RECIPES[d].app === app.a && recipeFits(RECIPES[d], next));
+    if (!options.length) {
+      nope(ii);
+      toast(`The ${A.name} can't use ${itemName(it.c, it.l)}`, A.sprite);
+      return;
+    }
+    app.load = next;
+    s.board[ii] = null;
+    selected = ai;
+    sellArmed = false;
+    flySprite(itemSprite(it.c, it.l), cells[ii].getBoundingClientRect(), cells[ai].getBoundingClientRect());
+    sfx.pop();
+    haptic(1);
+    const ready = options.find((d) => recipeDone(RECIPES[d], app.load));
+    if (ready) {
+      app.cook = { d: ready, done: Date.now() + RECIPES[ready].secs * 1000 };
+      app.load = [];
+      setTimeout(() => sfx.ready(), 150);
+      haptic(2);
+      toast(`${A.verb} ${RECIPES[ready].name}!`, RECIPES[ready].sprite);
+    }
+    afterBoardChange();
+    anim(ai, 'squish');
+  }
+
+  function collect(ai) {
+    const app = s.board[ai];
+    const to = nearestEmpty(s, ai);
+    if (to < 0) {
+      nope(ai);
+      toast('Board is full! Make some room first');
+      return;
+    }
+    const d = app.out;
+    app.out = null;
+    s.board[to] = { t: 'dish', d };
+    sfx.pop();
+    haptic(2);
+    afterBoardChange();
+    flyFrom(ai, to);
+    anim(ai, 'squish');
+    if (!s.dishes[d]) {
+      s.dishes[d] = true;
+      const bonus = 20;
+      save.addCoins(bonus);
+      setTimeout(() => sfx.discover(), 150);
+      toast(`New dish: ${RECIPES[d].name}! +${bonus}`, RECIPES[d].sprite);
+      const [x, y] = center(cells[to]);
+      burst(x, y, { count: 14, spread: 70, stars: 3 });
+    }
+  }
+
+  // Gives back ingredients that were put in an appliance.
+  function eject(ai) {
+    const app = s.board[ai];
+    if (!app || app.t !== 'app' || !app.load.length) return;
+    while (app.load.length) {
+      const to = nearestEmpty(s, ai);
+      if (to < 0) {
+        toast('No room to take everything out');
+        break;
+      }
+      const x = app.load.pop();
+      s.board[to] = { t: 'item', c: x.c, l: x.l };
+    }
+    sfx.drop();
+    afterBoardChange();
   }
 
   async function energyDialog() {
@@ -792,6 +1128,15 @@ export function mount(root, { headerSlot }) {
     return null;
   }
 
+  // Would the appliance at b accept the ingredient at a right now?
+  const canLoad = (a, b) => {
+    const A = s.board[a];
+    const B = s.board[b];
+    if (!A || !B || A.t !== 'item' || B.t !== 'app' || B.cook || B.out) return false;
+    const next = [...B.load, { c: A.c, l: A.l }];
+    return RECIPE_IDS.some((d) => RECIPES[d].app === B.a && recipeFits(RECIPES[d], next));
+  };
+
   const canMerge = (a, b) => {
     const A = s.board[a];
     const B = s.board[b];
@@ -823,17 +1168,17 @@ export function mount(root, { headerSlot }) {
     // Glow every item it could merge with.
     drag.matches = [];
     for (let i = 0; i < N; i++) {
-      if (canMerge(drag.from, i)) {
+      if (canMerge(drag.from, i) || canLoad(drag.from, i)) {
         cells[i].classList.add('match');
         drag.matches.push(i);
       }
     }
     // And any orders that want it.
-    if (it.t === 'item') {
-      const k = keyOf(it.c, it.l);
+    if (isServable(it)) {
+      const k = itemKey(it);
       for (const [id, e] of cardEls) {
         const o = s.orders.find((x) => x.id === id);
-        if (o.req.some((r) => keyOf(r.c, r.l) === k)) e.card.classList.add(e.ready ? 'can-drop' : 'wants');
+        if (o.req.some((r) => reqKey(r) === k)) e.card.classList.add(e.ready ? 'can-drop' : 'wants');
       }
     }
     moveGhost(x, y);
@@ -891,7 +1236,7 @@ export function mount(root, { headerSlot }) {
       if (over >= 0 && over !== drag.from) {
         drag.over = over;
         cells[over].classList.add('over');
-        if (canMerge(drag.from, over)) {
+        if (canMerge(drag.from, over) || canLoad(drag.from, over)) {
           cells[over].classList.add('merge');
           sfx.press();
         }
@@ -919,8 +1264,8 @@ export function mount(root, { headerSlot }) {
     // Dropped on an order card?
     const o = to < 0 ? orderAt(e.clientX, e.clientY) : null;
     const it = s.board[d.from];
-    if (o && it && it.t === 'item') {
-      const wantsIt = o.req.some((r) => r.c === it.c && r.l === it.l);
+    if (o && isServable(it)) {
+      const wantsIt = o.req.some((r) => reqKey(r) === itemKey(it));
       if (wantsIt && orderReady(o, boardCounts(s))) serve(o, d.from);
       else {
         nope(d.from);
@@ -954,6 +1299,19 @@ export function mount(root, { headerSlot }) {
       renderEnergy();
       save.persist();
     }
+    // Appliances: progress bars, and dishes finishing
+    const done = finishCooking();
+    s.board.forEach((it, i) => it && it.t === 'app' && it.cook && updateBar(i));
+    if (done.length) {
+      sfx.ready();
+      for (const i of done) {
+        renderCell(i);
+        anim(i, 'jump');
+      }
+      save.persist();
+    }
+    const sel = s.board[selected];
+    if (sel && sel.t === 'app' && (sel.cook || done.includes(selected))) renderInfo();
   }, 1000);
 
   placePending();

@@ -21,6 +21,8 @@ Coins are shared across all games.
 - Fill the customers' orders at the top for coins and XP. Items that a customer wants show a little heart.
 - Level up to unlock new generators: Fruit Crate (Lv 2), Hen (Lv 3), Teapot (Lv 4).
 - Tap an item to see its recipe chain or sell it.
+- Appliances (Oven Lv 2, Blender Lv 3, Stove Lv 4, Tea Bar Lv 5) combine ingredients from different generators. Drag ingredients onto one; when a recipe is complete it cooks for a bit, then tap it to collect the dish. Customers pay extra for dishes. Tap an appliance and then **Recipes** to see what it makes.
+- Energy: 100 max, +1 every 2 minutes. Leveling up gives +10 energy, and a full refill costs 100 coins.
 
 ### Fishy Tank: how to play
 

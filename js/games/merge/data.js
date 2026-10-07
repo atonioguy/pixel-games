@@ -5,7 +5,8 @@ export const ROWS = 9;
 
 export const ENERGY_MAX = 100;
 export const ENERGY_REGEN_MS = 2 * 60 * 1000; // +1 energy every 2 minutes
-export const REFILL_COST = 50; // coins to refill energy
+export const REFILL_COST = 100; // coins to refill energy
+export const LEVELUP_ENERGY = 10; // small energy gift on level up (no more full refills)
 
 // Each chain has a generator (tap it to make level-1 items) and items that merge upward.
 // `unlock` is the kitchen level that unlocks the generator.
@@ -95,6 +96,145 @@ export const GEN_HOME = {
   drinks: [7, 4],
 };
 
+// Appliances combine ingredients from different generators into dishes.
+// Drag ingredients onto an appliance; when a recipe is complete it cooks for `secs`.
+export const APPLIANCES = {
+  oven: { name: 'Oven', sprite: 'app_oven', unlock: 2, verb: 'Baking' },
+  blender: { name: 'Blender', sprite: 'app_blender', unlock: 3, verb: 'Blending' },
+  stove: { name: 'Stove', sprite: 'app_stove', unlock: 4, verb: 'Cooking' },
+  teabar: { name: 'Tea Bar', sprite: 'app_teabar', unlock: 5, verb: 'Brewing' },
+};
+export const APP_IDS = Object.keys(APPLIANCES);
+export const APP_HOME = { oven: [0, 3], blender: [0, 1], stove: [0, 5], teabar: [1, 3] };
+
+// needs: [chain, level] ingredients
+export const RECIPES = {
+  butterbun: {
+    name: 'Butter Bun',
+    sprite: 'dish_butterbun',
+    app: 'oven',
+    secs: 20,
+    needs: [
+      ['bakery', 4],
+      ['dairy', 2],
+    ],
+  },
+  berrypie: {
+    name: 'Berry Pie',
+    sprite: 'dish_berrypie',
+    app: 'oven',
+    secs: 45,
+    needs: [
+      ['bakery', 3],
+      ['fruit', 2],
+    ],
+  },
+  cheesetoast: {
+    name: 'Cheese Toast',
+    sprite: 'dish_cheesetoast',
+    app: 'oven',
+    secs: 60,
+    needs: [
+      ['bakery', 5],
+      ['dairy', 3],
+    ],
+  },
+  strawmilk: {
+    name: 'Strawberry Milk',
+    sprite: 'dish_strawmilk',
+    app: 'blender',
+    secs: 20,
+    needs: [
+      ['dairy', 1],
+      ['fruit', 2],
+    ],
+  },
+  custard: {
+    name: 'Egg Custard',
+    sprite: 'dish_custard',
+    app: 'blender',
+    secs: 35,
+    needs: [
+      ['eggs', 1],
+      ['dairy', 1],
+      ['bakery', 2],
+    ],
+  },
+  smoothie: {
+    name: 'Berry Smoothie',
+    sprite: 'dish_smoothie',
+    app: 'blender',
+    secs: 45,
+    needs: [
+      ['fruit', 3],
+      ['dairy', 1],
+      ['fruit', 1],
+    ],
+  },
+  eggsandwich: {
+    name: 'Egg Sandwich',
+    sprite: 'dish_eggsandwich',
+    app: 'stove',
+    secs: 30,
+    needs: [
+      ['eggs', 2],
+      ['bakery', 4],
+    ],
+  },
+  cheesyomelette: {
+    name: 'Cheesy Omelette',
+    sprite: 'dish_cheesyomelette',
+    app: 'stove',
+    secs: 45,
+    needs: [
+      ['eggs', 3],
+      ['dairy', 3],
+    ],
+  },
+  berrypancakes: {
+    name: 'Berry Pancakes',
+    sprite: 'dish_berrypancakes',
+    app: 'stove',
+    secs: 75,
+    needs: [
+      ['eggs', 4],
+      ['fruit', 3],
+    ],
+  },
+  milktea: {
+    name: 'Milk Tea',
+    sprite: 'dish_milktea',
+    app: 'teabar',
+    secs: 25,
+    needs: [
+      ['drinks', 2],
+      ['dairy', 1],
+    ],
+  },
+  bobafloat: {
+    name: 'Boba Float',
+    sprite: 'dish_bobafloat',
+    app: 'teabar',
+    secs: 60,
+    needs: [
+      ['drinks', 4],
+      ['dairy', 4],
+    ],
+  },
+  teaset: {
+    name: 'Tea Party',
+    sprite: 'dish_teaset',
+    app: 'teabar',
+    secs: 90,
+    needs: [
+      ['drinks', 2],
+      ['bakery', 6],
+      ['fruit', 2],
+    ],
+  },
+};
+export const RECIPE_IDS = Object.keys(RECIPES);
+
 // A few items to start with: [cellIndex, chain, level]
 export const STARTER = [
   [23, 'bakery', 1],
@@ -118,3 +258,7 @@ export const orderValue = (level) => 3 * 2 ** (level - 1);
 
 // Coins for selling an item
 export const sellValue = (level) => Math.max(1, Math.round(orderValue(level) / 4));
+
+// Dishes are worth more than their ingredients put together
+export const dishValue = (d) => Math.round(RECIPES[d].needs.reduce((a, [, l]) => a + orderValue(l), 0) * 1.6);
+export const dishXP = (d) => Math.round(RECIPES[d].needs.reduce((a, [, l]) => a + l * 2, 0) * 1.5);
