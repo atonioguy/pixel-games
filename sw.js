@@ -2,7 +2,7 @@
 // Online: always loads the latest version (and saves a copy).
 // Offline: falls back to the saved copy.
 // Bump VERSION whenever the file list changes.
-const VERSION = 'cozy-v3';
+const VERSION = 'cozy-v4';
 const FILES = [
   './',
   './index.html',

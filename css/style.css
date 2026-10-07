@@ -127,11 +127,24 @@ img,
 
 /* ---------- Top bar ---------- */
 
+/* iOS 26 home-screen apps blur the top edge unless a fixed element with a plain
+   background-color sits ~8px below it. This strip is that element (keep it >8px tall,
+   solid colour, and hittable: no pointer-events:none). Header content starts below it. */
+.topcap {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 10px;
+  z-index: 6;
+  background-color: #f7c9cf;
+}
+
 #topbar {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px 6px;
+  padding: 13px 12px 6px;
   min-height: 52px;
   z-index: 5;
 }
