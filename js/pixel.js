@@ -93,3 +93,26 @@ export function tileURL(rows, colors, scale = 3) {
   }
   return `url(${cv.toDataURL()})`;
 }
+
+const canvasCache = new Map();
+
+// Returns a 16x16 canvas of the sprite (1 canvas pixel per sprite pixel), optionally mirrored.
+// Used by canvas-based games, which draw it scaled up with smoothing turned off.
+export function spriteCanvas(name, rows, flip = false) {
+  const key = name + (flip ? ':f' : '');
+  if (canvasCache.has(key)) return canvasCache.get(key);
+  const grid = bake(rows);
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = SIZE;
+  const ctx = cv.getContext('2d');
+  for (let y = 0; y < SIZE; y++) {
+    for (let x = 0; x < SIZE; x++) {
+      const col = PALETTE[grid[y][x]];
+      if (!col) continue;
+      ctx.fillStyle = col;
+      ctx.fillRect(flip ? SIZE - 1 - x : x, y, 1, 1);
+    }
+  }
+  canvasCache.set(key, cv);
+  return cv;
+}

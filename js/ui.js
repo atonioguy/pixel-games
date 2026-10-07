@@ -199,3 +199,39 @@ export function center(elem) {
   const r = elem.getBoundingClientRect();
   return [r.left + r.width / 2, r.top + r.height / 2];
 }
+
+// A panel that slides up from the bottom. render(refresh, close) returns its contents.
+export function sheet(title, render, onClose) {
+  const body = el('div', { class: 'sheet-body' });
+  let closed = false;
+  const close = () => {
+    if (closed) return;
+    closed = true;
+    shade.classList.add('out');
+    setTimeout(() => shade.remove(), 200);
+    onClose?.();
+  };
+  const shade = el(
+    'div',
+    { class: 'shade sheet-shade', onclick: (e) => e.target === shade && close() },
+    el(
+      'div',
+      { class: 'sheet px-box' },
+      el(
+        'div',
+        { class: 'sheet-head' },
+        el('h2', {}, title),
+        el('button', { class: 'icon-btn close-btn', 'aria-label': 'Close', onclick: close }, '✕'),
+      ),
+      body,
+    ),
+  );
+  document.body.append(shade);
+  const refresh = () => {
+    const top = body.scrollTop;
+    body.replaceChildren(...[render(refresh, close)].flat());
+    body.scrollTop = top;
+  };
+  refresh();
+  return { close, refresh };
+}

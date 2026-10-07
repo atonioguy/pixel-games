@@ -474,7 +474,7 @@ export function mount(root, { headerSlot }) {
   // A sprite that flies from one rect to another (used when serving).
   function flySprite(name, from, to, delay = 0) {
     const size = from.width * 0.86;
-    const img = el('img', { class: 'ghost', src: spriteSrc(name), alt: '' });
+    const img = el('img', { class: 'drag-float', src: spriteSrc(name), alt: '' });
     img.style.width = img.style.height = size + 'px';
     document.body.append(img);
     const sx = from.left + (from.width - size) / 2;
@@ -808,7 +808,7 @@ export function mount(root, { headerSlot }) {
     const size = cells[drag.from].getBoundingClientRect().width * 1.25;
     drag.ghost = el(
       'div',
-      { class: 'ghost drag-ghost' },
+      { class: 'drag-float drag-ghost' },
       el('img', { src: spriteSrc(spriteOf(it)), alt: '', draggable: 'false' }),
     );
     drag.ghost.style.width = drag.ghost.style.height = size + 'px';
